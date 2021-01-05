@@ -2,10 +2,15 @@ library(missForest)
 library(cluster)
 library(ape)
 
+conflict_prefer("as.matrix", "base")
+conflict_prefer("dist", "stats")
+
+setwd("Github/Repos/stock-betacov")
+
 # INTERACTIONS
 # ------------
 
-Y <-read.csv("03_interaction_data/Y.csv", row.names = 73)
+Y <- read.csv("03_interaction_data/Y.csv", row.names = 73)
 hosts <- row.names(Y)
 viruses <- colnames(Y)
 
@@ -35,7 +40,7 @@ for(i in 1:m){
 }
 
 # smoother kernel
-G <-G.fam +  0.1 * diag(m) + 0.1
+G <- G.fam +  0.1 * diag(m) + 0.1
 rownames(G) <- colnames(Y)
 colnames(G) <- colnames(Y)
 
@@ -66,22 +71,50 @@ brtvar <- c('X5.1_AdultBodyMass_g',
             'ForStrat.Value_G',
             'ForStrat.Value_S', 'cites')
 
-battraits <- read.csv("04_predictors/Han-BatTraits.csv", row.names = 1)
+if(file.exists("04_predictors/battraits-completed.csv")){
+  
+  battraits.imp <- read.csv("04_predictors/battraits-completed.csv", row.names = 1)
+  
+}else{
+  
+  "04_predictors/Han-BatTraits.csv" %>% 
+    read.csv(row.names = 1) ->
+    # read.csv() -> 
+    
+    battraits1
+  
+  ManipulateColumns <- battraits1 %>% 
+    dplyr::select(4:66) %>%
+    names
+  
+  read.csv(paste0(here::here(), '/Github/Repos/virionette/04_predictors/Han-BatTraits.csv')) -> 
+    
+    battraits
+  
+  # UNCOMMENT IF YOU NEED TO battraits-completed.csv, takes 10'
+  
+  battraits$Activity.Nocturnal <- as.factor(battraits$Activity.Nocturnal)
+  battraits$Activity.Diurnal <- as.factor(battraits$Activity.Diurnal)
+  battraits$Activity.Crepuscular <- as.factor(battraits$Activity.Crepuscular)
+  
+  battraits.imputed <- missForest(battraits1[,ManipulateColumns], ntree=200)
+  
+  vartoremove <- c("X21.1_PopulationDensity_n", "X12.2_Terrestriality", "Diet.Vunk", "Diet.Scav")
+  battraits.imp <- battraits.imputed$ximp[,-c(19, 23, 50, 51)]
+  
+  write.csv(battraits.imp, "04_predictors/battraits-completed.csv")
+  
+}
 
-# UNCOMMENT IF YOU NEED TO battraits-completed.csv, takes 10'
+read.csv(paste0(here::here(), 
+                '/Github/Repos/virionette/04_predictors/Citations.csv'), 
+         row.names = 2) -> 
+  
+  citations
 
-# battraits$Activity.Nocturnal <- as.factor(battraits$Activity.Nocturnal)
-# battraits$Activity.Diurnal <- as.factor(battraits$Activity.Diurnal)
-# battraits$Activity.Crepuscular <- as.factor(battraits$Activity.Crepuscular)
-# 
-# battraits.imputed <- missForest(battraits[,4:66], ntree=200)
-# 
-# vartoremove <- c("X21.1_PopulationDensity_n", "X12.2_Terrestriality", "Diet.Vunk", "Diet.Scav")
-# battraits.imp <- battraits.imputed$ximp[,-c(19, 23, 50, 51)]
-# 
-# write.csv(battraits.imp, "04_predictors/battraits-completed.csv")
-battraits.imp <- read.csv("04_predictors/battraits-completed.csv", row.names = 1)
-citations <- read.csv("04_predictors/Citations.csv", row.names = 2)[row.names(battraits.imp),]
+# citations <- read.csv("04_predictors/Citations.csv", row.names = 2)[row.names(battraits.imp),]
+
+citations <- citations[row.names(battraits.imp),]
 
 # subset of the variables
 battraits.imp <- battraits.imp[,as.factor(brtvar)]
@@ -117,7 +150,12 @@ K.traits.test <- K.traits.complete[,hosts.traits]
 # PHYLOGENY HOSTS
 # ---------------
 
-tree <- readRDS("04_predictors/bat-supertree_clean.rds")
+readRDS(paste0(here::here(), 
+                '/Github/Repos/virionette/04_predictors/bat-supertree_clean.rds')) -> 
+  
+  tree
+
+# tree <- readRDS("04_predictors/bat-supertree_clean.rds")
 tree <- as.phylo(tree)
 
 D.tree <- cophenetic(tree)
