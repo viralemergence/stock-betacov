@@ -1,3 +1,6 @@
+
+# Loading data for Stock Models ####
+
 library(missForest)
 library(cluster)
 library(ape)
@@ -10,7 +13,30 @@ setwd("Github/Repos/stock-betacov")
 # INTERACTIONS
 # ------------
 
-Y <- read.csv("03_interaction_data/Y.csv", row.names = 73)
+read.csv(paste0(here::here(), '/Github/Repos/virionette/03_interaction_data/virionette.csv')) -> 
+  
+  interactions
+
+interactions %<>% 
+mutate_at("host_species", ~.x %>% str_trim %>% str_replace_all(" ", "_"))
+
+Y <- interactions %>% 
+  dplyr::select(host_species, virus_genus) %>% 
+  table() %>% 
+  matrix(
+    
+    nrow = interactions %>% dplyr::select(host_species, virus_genus) %>% table() %>% nrow,
+    ncol = interactions %>% dplyr::select(host_species, virus_genus) %>% table() %>% ncol
+    
+  )
+
+dimnames(Y) <- interactions %>% 
+  dplyr::select(host_species, virus_genus) %>% 
+  table() %>% dimnames
+  
+Y %<>% as.data.frame()
+
+# Y <- read.csv("03_interaction_data/Y.csv", row.names = 73)
 hosts <- row.names(Y)
 viruses <- colnames(Y)
 
@@ -24,12 +50,29 @@ m <- dim(Y)[2]
 # compute genus sim
 famgenus <- data.frame(genus=c())
 
-interactions <- read.csv("03_interaction_data/virionette.csv")
+# interactions <- read.csv("03_interaction_data/virionette.csv")
+
+read.csv(paste0(here::here(), '/Github/Repos/virionette/03_interaction_data/virionette.csv')) -> 
+  
+  interactions
+
+interactions %>% mutate_at("virus_family", ~factor(.x, levels = c("", levels(.x)))) -> 
+  
+  interactions
+
 virus.geni <- c() 
 
-for(v in viruses){
-  virus.geni <- c(virus.geni, interactions[interactions$virus_genus==v,"virus_family"][1])
-}
+# for(v in viruses){
+#   virus.geni <- c(virus.geni, interactions[interactions$virus_genus==v,"virus_family"][1])
+# }
+
+virus.geni <- viruses %>% 
+   map(~interactions %>% filter(virus_genus == .x) %>% pull(virus_family) %>% unique %>% 
+         ifelse(is.na(.), "", .)) %>% 
+  map_chr(1) %>% 
+  ifelse(. == "", 1, .) %>% as.numeric
+
+# map_dbl(~interactions %>% filter(virus_genus == .x) %>% pull(virus_family) %>% unique)
 
 G.fam <- matrix(0, nrow=m, ncol=m)
 
