@@ -8,7 +8,7 @@ library(ape)
 conflict_prefer("as.matrix", "base")
 conflict_prefer("dist", "stats")
 
-setwd("Github/Repos/stock-betacov")
+setwd(paste0(here::here(), "/Github/Repos/stock-betacov"))
 
 # INTERACTIONS
 # ------------
@@ -222,7 +222,7 @@ hosts.both.test <- intersect(row.names(D.traits), row.names(D.tree))  # all the 
 Yboth <- Y[hosts.both,]
 n.both <- dim(Yboth)[1]
 
-K.both <- 0.5 * (K.traits + K.tree)
+K.both <- 0.5 * (K.traits[hosts.both, hosts.both] + K.tree[hosts.both, hosts.both])
 
 K.both.test <- 0.5 * (K.traits.complete[hosts.both.test,hosts.both] + K.tree.complete[hosts.both.test,hosts.both])
 
