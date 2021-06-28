@@ -56,7 +56,8 @@ read.csv(paste0(here::here(), '/Github/Repos/virionette/03_interaction_data/viri
   
   interactions
 
-interactions %>% mutate_at("virus_family", ~factor(.x, levels = c("", levels(.x)))) -> 
+interactions %>% mutate_at("virus_family", 
+                           ~factor(.x, levels = unique(c("", levels(.x))))) -> 
   
   interactions
 
