@@ -18,7 +18,7 @@ read.csv(paste0(here::here(), '/Github/Repos/virionette/03_interaction_data/viri
   interactions
 
 interactions %<>% 
-mutate_at("host_species", ~.x %>% str_trim %>% str_replace_all(" ", "_"))
+  mutate_at("host_species", ~.x %>% str_trim %>% str_replace_all(" ", "_"))
 
 Y <- interactions %>% 
   dplyr::select(host_species, virus_genus) %>% 
@@ -33,7 +33,7 @@ Y <- interactions %>%
 dimnames(Y) <- interactions %>% 
   dplyr::select(host_species, virus_genus) %>% 
   table() %>% dimnames
-  
+
 Y %<>% as.data.frame()
 
 # Y <- read.csv("03_interaction_data/Y.csv", row.names = 73)
@@ -68,8 +68,8 @@ virus.geni <- c()
 # }
 
 virus.geni <- viruses %>% 
-   map(~interactions %>% filter(virus_genus == .x) %>% pull(virus_family) %>% unique %>% 
-         ifelse(is.na(.), "", .)) %>% 
+  map(~interactions %>% filter(virus_genus == .x) %>% pull(virus_family) %>% unique %>% 
+        ifelse(is.na(.), "", .)) %>% 
   map_chr(1) %>% 
   ifelse(. == "", 1, .) %>% as.numeric
 
@@ -129,7 +129,7 @@ if(file.exists("04_predictors/battraits-completed.csv")){
   
   ManipulateColumns <- battraits1 %>% 
     dplyr::select(4:66) %>%
-    names
+    names %>% setdiff(c("IUCN", "ForStrat.Value"))
   
   read.csv(paste0(here::here(), '/Github/Repos/virionette/04_predictors/Han-BatTraits.csv')) -> 
     
@@ -195,7 +195,7 @@ K.traits.test <- K.traits.complete[,hosts.traits]
 # ---------------
 
 readRDS(paste0(here::here(), 
-                '/Github/Repos/virionette/04_predictors/bat-supertree_clean.rds')) -> 
+               '/Github/Repos/virionette/04_predictors/bat-supertree_clean.rds')) -> 
   
   tree
 
